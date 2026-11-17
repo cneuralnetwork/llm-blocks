@@ -131,7 +131,7 @@ def test_sdpa_matches_eager_backend(name):
         torch.testing.assert_close(sdpa(x, padding_mask=mask)[:, 3:], eager(x, padding_mask=mask)[:, 3:], atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.parametrize("name", ["GQA", "Mamba2", "GatedDeltaNet", "MLA"])
+@pytest.mark.parametrize("name", ["GQA", "Mamba2", "GatedDeltaNet", "KDA", "MLA"])
 def test_gradcheck_float64(name):
     spec = MIXERS[name]
     if hasattr(spec, "backend"):

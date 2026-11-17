@@ -15,6 +15,7 @@ Legend: ✅ implemented and tested · 🟡 partial / limited · ❌ not implemen
 | MLA (q-LoRA optional, decoupled RoPE, compressed cache, absorbed decode) | ✅ | matches HF `DeepseekV3Attention` (with/without q-LoRA), both full and absorbed-incremental paths |
 | Mamba-2 (chunked SSD + recurrent decode, ngroups) | ✅ | matches HF `Mamba2Mixer` torch path (ngroups 1 and 2); chunked vs token recurrence; gradcheck |
 | Gated DeltaNet (chunked WY + recurrent decode) | ✅ | kernel matches HF Qwen3-Next `torch_chunk/recurrent_gated_delta_rule`; matches the matrix-form definition; gradcheck. Layer wiring follows FLA but is **not** compared layer-for-layer against FLA |
+| Kimi Delta Attention (per-channel decay; chunked with secondary tiles + doubling inverse, recurrent decode) | ✅ | kernel matches the token recurrence and the matrix-form definition; reduces to Gated DeltaNet with a shared decay; finite fwd/bwd at chunk 64 with every channel at `g_min`; gradcheck; MPS == CPU. Chunked algorithm written from scratch for MPS; **not** compared against FLA / Kimi Linear |
 | Dense FFN (GELU / ReLU / SiLU / ReLU²), SwiGLU, GeGLU, generic GLU | ✅ | compared to explicit formulas |
 | MoE: softmax/sigmoid routing, top-k, renormalisation, shared experts | ✅ | dropless dispatch == naive per-token loop |
 | MoE: load-balancing loss, z-loss, aux-loss-free bias (DeepSeek-V3 style) | ✅ | value test at known routing; bias test shows load imbalance shrinking |
@@ -48,7 +49,7 @@ Legend: ✅ implemented and tested · 🟡 partial / limited · ❌ not implemen
 | Gradient checkpointing | ✅ | gradients equal to non-checkpointed |
 | `torch.compile` | 🟡 | dense / attention models: 0 graph breaks, ~1.9× faster training on MPS. Dropless MoE has graph breaks (host sync for per-expert counts); use `capacity_factor` for compile. Recurrent mixers compile (CPU-tested) but were not benchmarked compiled |
 | FlashAttention | 🟡 | via `F.scaled_dot_product_attention`, which selects FlashAttention on supported CUDA GPUs; the `flash-attn` package is not integrated; untested here |
-| Triton / custom CUDA kernels | ❌ | Triton is unavailable on macOS. Mamba-2 and Gated DeltaNet use pure-PyTorch chunked algorithms — correct, but slower than `mamba_ssm` / FLA kernels on GPU. Integrating those as optional backends is the next step |
+| Triton / custom CUDA kernels | ❌ | Triton is unavailable on macOS. Mamba-2, Gated DeltaNet and KDA use pure-PyTorch chunked algorithms — correct, but slower than `mamba_ssm` / FLA kernels on GPU. Integrating those as optional backends is the next step |
 | Grouped-GEMM MoE / expert parallelism | ❌ | dropless path loops over experts in Python |
 | Distributed training (DDP / FSDP / TP) | ❌ | the model is a plain `nn.Module` and should wrap with DDP/FSDP, but this is untested |
 | Production readiness | ❌ | not claimed |

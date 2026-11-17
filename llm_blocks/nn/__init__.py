@@ -20,7 +20,7 @@ from .attention import GQA, MHA, MLA, MQA, Attention, KVCache, MLACache, MultiHe
 from .base import FeedForward, FFNSpec, ForwardContext, MixerSpec, MixerState, SequenceMixer
 from .blocks import Block, BlockModule
 from .ffn import FFN, GLU, GeGLU, GeluFFN, ReluFFN, SwiGLU
-from .mixers import GatedDeltaNet, GatedDeltaNetMixer, Mamba2, Mamba2Mixer
+from .mixers import KDA, GatedDeltaNet, GatedDeltaNetMixer, KimiDeltaAttention, Mamba2, Mamba2Mixer
 from .models import LLM, LLMConfig, LMOutput, ModelState, every
 from .moe import MoE, MoELayer
 from .norm import LayerNorm, NormSpec, QKNorm, RMSNorm
@@ -31,7 +31,7 @@ __all__ = [
     # model
     "LLM", "LLMConfig", "LMOutput", "ModelState", "Block", "BlockModule", "every",
     # mixers
-    "MHA", "MQA", "GQA", "MLA", "Mamba2", "GatedDeltaNet",
+    "MHA", "MQA", "GQA", "MLA", "Mamba2", "GatedDeltaNet", "KDA",
     # feed-forward
     "FFN", "GeluFFN", "ReluFFN", "GLU", "SwiGLU", "GeGLU", "MoE",
     # normalization
@@ -45,5 +45,5 @@ __all__ = [
     "Spec", "MixerSpec", "FFNSpec", "NormSpec", "PositionSpec", "ResidualSpec", "BuildContext", "SpecError",
     "spec_from_dict",
     # implementations
-    "Attention", "KVCache", "MultiHeadLatentAttention", "MLACache", "Mamba2Mixer", "GatedDeltaNetMixer", "MoELayer",
+    "Attention", "KVCache", "MultiHeadLatentAttention", "MLACache", "Mamba2Mixer", "GatedDeltaNetMixer", "KimiDeltaAttention", "MoELayer",
 ]

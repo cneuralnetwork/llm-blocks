@@ -25,6 +25,7 @@ def tiny_mixers():
         "Mamba2": nn.Mamba2(d_state=16, headdim=16, chunk_size=8),
         "Mamba2-groups": nn.Mamba2(d_state=8, headdim=16, ngroups=2, chunk_size=4),
         "GatedDeltaNet": nn.GatedDeltaNet(heads=2, head_dim=16, chunk_size=8),
+        "KDA": nn.KDA(heads=2, head_dim=16, decay_rank=8, chunk_size=8),
     }
 
 

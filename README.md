@@ -144,7 +144,7 @@ nn.LLM(vocab_size=32000, dim=768, layers=[nn.Block(mixer=nn.Mamba2(position=nn.R
 
 | Family | Blocks |
 |---|---|
-| **Sequence mixers** | `MHA` · `MQA` · `GQA` · `MLA` (DeepSeek-V2 latent attention, compressed cache, absorbed decoding) · `Mamba2` · `GatedDeltaNet` |
+| **Sequence mixers** | `MHA` · `MQA` · `GQA` · `MLA` (DeepSeek-V2 latent attention, compressed cache, absorbed decoding) · `Mamba2` · `GatedDeltaNet` · `KDA` ([Kimi Delta Attention](https://arxiv.org/abs/2510.26692), per-channel decay; chunked algorithm written from scratch to run on MPS) |
 | **Feed-forward** | `FFN` · `GeluFFN` · `ReluFFN` · `GLU` · `SwiGLU` · `GeGLU` · `MoE`: top-k, softmax or sigmoid routing, shared experts, dropless or capacity dispatch, load-balance and z-losses, aux-loss-free bias balancing |
 | **Normalization** | `RMSNorm` · `LayerNorm` · `QKNorm` (`qk_norm=True`) · pre- or post-norm blocks |
 | **Positions** | `RoPE` (incl. partial) · `ALiBi` · `LearnedPositions` · `NoPE`, each checked for compatibility with its mixer |
@@ -257,6 +257,7 @@ Full working example, including incremental decoding: [examples/custom_mixer.py]
   | MLA | normalized latent + shared rotary key | `(kv_lora_rank + rope_dim) · T` |
   | Mamba-2 | conv window + SSM state | constant |
   | Gated DeltaNet | conv window + fast-weight matrix | constant |
+  | KDA | conv window + fast-weight matrix | constant |
 
 - **Auxiliary outputs without hidden state.** MoE balance losses travel through a per-forward
   `ForwardContext` and come back in `LMOutput.aux_loss`.
@@ -357,7 +358,7 @@ llm_blocks/
   configs/spec.py         Spec base class, BuildContext, JSON registry
   nn/base.py              SequenceMixer, FeedForward, MixerState, ForwardContext
   nn/attention/           MHA / GQA / MQA (+ KV cache), MLA (+ latent cache)
-  nn/mixers/              Mamba-2, Gated DeltaNet, causal conv
+  nn/mixers/              Mamba-2, Gated DeltaNet, KDA, causal conv
   nn/ffn/  nn/moe/        dense and gated FFNs, stacked experts, MoE
   nn/norm/ nn/position/   norms; RoPE, ALiBi, learned, NoPE
   nn/residual/            Residual, GatedResidual, HyperConnections, MHC, AttnRes
@@ -377,9 +378,16 @@ The Mamba-2 SSD algorithm follows [state-spaces/mamba](https://github.com/state-
 (Apache-2.0). The Gated DeltaNet layer follows
 [flash-linear-attention](https://github.com/fla-org/flash-linear-attention) (MIT). Reference tests
 use [HuggingFace transformers](https://github.com/huggingface/transformers). Papers implemented
-include DeepSeek-V2 (MLA), Mamba-2, Gated DeltaNet, Hyper-Connections,
+include DeepSeek-V2 (MLA), Mamba-2, Gated DeltaNet, [Kimi Linear](https://arxiv.org/abs/2510.26692) (KDA), Hyper-Connections,
 [mHC](https://arxiv.org/abs/2512.24880) and [Attention Residuals](https://arxiv.org/abs/2603.15031).
 See [NOTICE](NOTICE).
+
+**Kimi Delta Attention.** `nn.KDA` implements KDA from Kimi Team,
+[*Kimi Linear: An Expressive, Efficient Attention Architecture*](https://arxiv.org/abs/2510.26692)
+(arXiv:2510.26692, 2025). The chunked algorithm is written from scratch in PyTorch to run on
+Apple silicon (MPS), without the CUDA/Triton kernels of the official release: secondary decay
+tiles keep the per-channel decay in float32 range, and the triangular inverse uses repeated
+squaring instead of a triangular solve.
 
 ## Citation
 
@@ -388,6 +396,17 @@ See [NOTICE](NOTICE).
   title  = {llm-blocks: composable building blocks for LLM architecture research},
   url    = {https://github.com/cneuralnetwork/llm-blocks},
   year   = {2026}
+}
+```
+
+If you use `nn.KDA`, please also cite the Kimi Linear paper:
+
+```bibtex
+@article{kimi_linear_2025,
+  title   = {Kimi Linear: An Expressive, Efficient Attention Architecture},
+  author  = {{Kimi Team}},
+  journal = {arXiv preprint arXiv:2510.26692},
+  year    = {2025}
 }
 ```
 
